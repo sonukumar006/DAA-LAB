@@ -2,82 +2,53 @@
 #include <stdlib.h>
 #include <time.h>
 
-// Version (i): optimized bubble sort with early termination
-long bubbleSortOptimized(int arr[], int n) {
-    int *a = malloc(n * sizeof(int));
-    for (int i = 0; i < n; i++) a[i] = arr[i];
-    long comparisons = 0;
-    int swapped;
-    for (int i = 0; i < n - 1; i++) {
-        swapped = 0;
-        for (int j = 0; j < n - i - 1; j++) {
-            comparisons++;
-            if (a[j] > a[j + 1]) {
-                int tmp = a[j];
-                a[j] = a[j + 1];
-                a[j + 1] = tmp;
-                swapped = 1;
-            }
+/* Simulate n tosses of a coin with P(HEAD) = p_head.
+ * Returns the number of heads observed. */
+long simulate_tosses(long n, double p_head) {
+    long heads = 0;
+    for (long i = 0; i < n; i++) {
+        /* rand() gives [0, RAND_MAX]; convert to a uniform double in [0,1) */
+        double r = (double) rand() / ((double) RAND_MAX + 1.0);
+        if (r < p_head) {
+            heads++;
         }
-        if (!swapped) break;
     }
-    free(a);
-    return comparisons;
+    return heads;
 }
 
-// Version (ii): naive bubble sort, always completes n-1 passes
-long bubbleSortNaive(int arr[], int n) {
-    int *a = malloc(n * sizeof(int));
-    for (int i = 0; i < n; i++) a[i] = arr[i];
-    long comparisons = 0;
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = 0; j < n - i - 1; j++) {
-            comparisons++;
-            if (a[j] > a[j + 1]) {
-                int tmp = a[j];
-                a[j] = a[j + 1];
-                a[j + 1] = tmp;
-            }
-        }
-    }
-    free(a);
-    return comparisons;
+void run_experiment(const char *label, long n, double p_head) {
+    long heads = simulate_tosses(n, p_head);
+    double observed_prob = (double) heads / (double) n;
+
+    printf("%-20s | Tosses: %10ld | True P(H)=%.2f | Heads: %10ld | "
+           "Observed P(H) = %.5f\n",
+           label, n, p_head, heads, observed_prob);
 }
 
 int main(void) {
-    srand(42); // fixed seed for reproducibility
+    srand((unsigned int) time(NULL));
 
-    FILE *fp = fopen("results.csv", "w");
-    if (!fp) {
-        printf("Error opening file\n");
-        return 1;
-    }
-    fprintf(fp, "n,optimized_comparisons,naive_comparisons\n");
+    long trial_sizes[] = {100, 1000, 10000, 100000, 1000000, 10000000};
+    int num_sizes = sizeof(trial_sizes) / sizeof(trial_sizes[0]);
 
-    int sizes[] = {10, 50, 100, 200, 300, 400, 500, 700, 900, 1100,
-                   1300, 1500, 1700, 2000, 2300, 2600, 3000};
-    int numSizes = sizeof(sizes) / sizeof(sizes[0]);
-    int trials = 5; // average over multiple random arrays per size
+    double fair_p = 0.5;    /* fair coin   */
+    double biased_p = 0.75; /* biased coin: 75% chance of heads */
 
-    for (int s = 0; s < numSizes; s++) {
-        int n = sizes[s];
-        long totalOpt = 0, totalNaive = 0;
-        for (int t = 0; t < trials; t++) {
-            int *arr = malloc(n * sizeof(int));
-            for (int i = 0; i < n; i++) arr[i] = rand() % 100000;
-
-            totalOpt += bubbleSortOptimized(arr, n);
-            totalNaive += bubbleSortNaive(arr, n);
-
-            free(arr);
-        }
-        long avgOpt = totalOpt / trials;
-        long avgNaive = totalNaive / trials;
-        fprintf(fp, "%d,%ld,%ld\n", n, avgOpt, avgNaive);
-        printf("n=%5d  optimized_avg=%10ld  naive_avg=%10ld\n", n, avgOpt, avgNaive);
+    printf("=================================================================\n");
+    printf(" PART 1: FAIR COIN - convergence toward P(HEAD) = 0.5\n");
+    printf("=================================================================\n");
+    for (int i = 0; i < num_sizes; i++) {
+        run_experiment("Fair coin", trial_sizes[i], fair_p);
     }
 
-    fclose(fp);
-    printf("\nResults written to results.csv\n");
+    printf("\n=================================================================\n");
+    printf(" PART 2: FAIR vs BIASED coin comparison\n");
+    printf("=================================================================\n");
+    for (int i = 0; i < num_sizes; i++) {
+        run_experiment("Fair coin",   trial_sizes[i], fair_p);
+        run_experiment("Biased coin", trial_sizes[i], biased_p);
+        printf("-----------------------------------------------------------------\n");
+    }
+
     return 0;
 }

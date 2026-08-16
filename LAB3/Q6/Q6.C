@@ -1,65 +1,60 @@
 #include <stdio.h>
 
-// Selection Sort
+long long comparisons = 0;
+
 void selectionSort(int A[], int n)
 {
-    int i, j, minIndex, temp;
-
-    for (i = 0; i < n - 1; i++)
+    for (int i = 0; i < n - 1; i++)
     {
-        // Assume current element is minimum
-        minIndex = i;
+        int minIndex = i;
 
-        // Find minimum element in A[i...n-1]
-        for (j = i + 1; j < n; j++)
+        for (int j = i + 1; j < n; j++)
         {
+            comparisons++;
+
             if (A[j] < A[minIndex])
             {
                 minIndex = j;
             }
         }
 
-        // Exchange A[i] and A[minIndex]
-        temp = A[i];
+        // Swap
+        int temp = A[i];
         A[i] = A[minIndex];
         A[minIndex] = temp;
     }
-}
-
-// Print array
-void printArray(int A[], int n)
-{
-    for (int i = 0; i < n; i++)
-    {
-        printf("%d ", A[i]);
-    }
-
-    printf("\n");
 }
 
 int main()
 {
     int n;
 
-    printf("Enter the number of elements: ");
+    printf("Enter number of elements: ");
     scanf("%d", &n);
 
     int A[n];
 
-    printf("Enter %d elements:\n", n);
+    printf("Enter elements:\n");
 
     for (int i = 0; i < n; i++)
     {
         scanf("%d", &A[i]);
     }
 
-    printf("\nOriginal Array:\n");
-    printArray(A, n);
-
     selectionSort(A, n);
 
-    printf("\nSorted Array:\n");
-    printArray(A, n);
+    printf("\nSorted array:\n");
+
+    for (int i = 0; i < n; i++)
+    {
+        printf("%d ", A[i]);
+    }
+
+    printf("\n\nNumber of comparisons = %lld\n",
+           comparisons);
+
+    printf("Theoretical comparisons = %lld\n",
+           (long long)n * (n - 1) / 2);
 
     return 0;
 }

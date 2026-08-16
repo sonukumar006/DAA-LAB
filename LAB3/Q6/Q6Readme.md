@@ -417,30 +417,5 @@ Thus, the implementation validates that Selection Sort has a quadratic running t
 
 ---
 
-## Files
 
-```text
-question6.c
-README.md
-```
 
-## Compilation
-
-Using GCC:
-
-```bash
-gcc question6.c -o question6
-```
-
-Run:
-
-```bash
-./question6
-```
-
-For Windows:
-
-```bash
-gcc question6.c -o question6.exe
-question6.exe
-```

@@ -1,4 +1,4 @@
-# Question 5 – Matrix Multiplication Using Divide and Conquer
+#  Matrix Multiplication Using Divide and Conquer
 
 ## Problem Statement
 

@@ -1,4 +1,4 @@
-# Question 2 – Search the Defective Coin
+#  Search the Defective Coin
 
 ## Problem Statement
 

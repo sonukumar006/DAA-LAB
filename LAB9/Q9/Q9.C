@@ -1,10 +1,11 @@
+
 #include <stdio.h>
 #include <limits.h>
 
 #define MAX 100
 
 struct Block {
-    int weight;
+    long long weight;
     int original;
 };
 
@@ -13,12 +14,8 @@ void printBlocks(struct Block blocks[], int n) {
 
     printf("[ ");
     for (i = 0; i < n; i++) {
-        printf("%d", blocks[i].weight);
-
-        if (blocks[i].original)
-            printf("(O)");
-        else
-            printf("(A)");
+        printf("%lld", blocks[i].weight);
+        printf("%s", blocks[i].original ? "(O)" : "(A)");
 
         if (i != n - 1)
             printf(" ");
@@ -26,21 +23,12 @@ void printBlocks(struct Block blocks[], int n) {
     printf(" ]\n");
 }
 
-/*
-   prefix[i] = number of original blocks among
-               blocks[0] ... blocks[i-1]
-
-   For i < j, the number of original blocks strictly
-   between i and j is prefix[j] - prefix[i + 1].
-*/
 void buildPrefix(struct Block blocks[], int n, int prefix[]) {
     int i;
-
     prefix[0] = 0;
 
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n; i++)
         prefix[i + 1] = prefix[i] + blocks[i].original;
-    }
 }
 
 int isCompatible(int left, int right, int prefix[]) {
@@ -50,30 +38,20 @@ int isCompatible(int left, int right, int prefix[]) {
         right = temp;
     }
 
-    if (prefix[right] - prefix[left + 1] == 0)
-        return 1;
-
-    return 0;
+    return prefix[right] - prefix[left + 1] == 0;
 }
 
-/*
-   For every block, find the smallest-weight block
-   compatible with it.
-*/
-void findMinimumCompatibleWeights(struct Block blocks[],
-                                  int n,
-                                  int prefix[],
-                                  int minCompatible[]) {
+void findMinimumCompatibleWeights(
+    struct Block blocks[], int n, int prefix[],
+    long long minCompatible[]) {
+
     int i, j;
 
     for (i = 0; i < n; i++) {
-        minCompatible[i] = INT_MAX;
+        minCompatible[i] = LLONG_MAX;
 
         for (j = 0; j < n; j++) {
-            if (i == j)
-                continue;
-
-            if (isCompatible(i, j, prefix)) {
+            if (i != j && isCompatible(i, j, prefix)) {
                 if (blocks[j].weight < minCompatible[i])
                     minCompatible[i] = blocks[j].weight;
             }
@@ -81,45 +59,33 @@ void findMinimumCompatibleWeights(struct Block blocks[],
     }
 }
 
-/*
-   Hu-Tucker chooses a local minimum compatible pair:
-   each block must be the minimum-weight compatible
-   block for the other block.
+void findBestPair(
+    struct Block blocks[], int n, int prefix[],
+    int *bestLeft, int *bestRight) {
 
-   Among several such pairs, choose the one with the
-   smallest combined weight.
-*/
-void findBestPair(struct Block blocks[],
-                  int n,
-                  int prefix[],
-                  int *bestLeft,
-                  int *bestRight) {
-    int minCompatible[MAX];
+    long long minCompatible[MAX];
+    long long bestSum = LLONG_MAX;
     int i, j;
-    int bestSum = INT_MAX;
 
     *bestLeft = -1;
     *bestRight = -1;
 
-    findMinimumCompatibleWeights(blocks, n, prefix,
-                                 minCompatible);
+    findMinimumCompatibleWeights(
+        blocks, n, prefix, minCompatible);
 
     for (i = 0; i < n - 1; i++) {
         for (j = i + 1; j < n; j++) {
+            if (isCompatible(i, j, prefix) &&
+                blocks[i].weight == minCompatible[j] &&
+                blocks[j].weight == minCompatible[i]) {
 
-            if (isCompatible(i, j, prefix)) {
+                long long sum =
+                    blocks[i].weight + blocks[j].weight;
 
-                if (blocks[i].weight == minCompatible[j] &&
-                    blocks[j].weight == minCompatible[i]) {
-
-                    int sum = blocks[i].weight +
-                              blocks[j].weight;
-
-                    if (sum < bestSum) {
-                        bestSum = sum;
-                        *bestLeft = i;
-                        *bestRight = j;
-                    }
+                if (sum < bestSum) {
+                    bestSum = sum;
+                    *bestLeft = i;
+                    *bestRight = j;
                 }
             }
         }
@@ -130,38 +96,51 @@ void mergeBlocks(struct Block blocks[], int *n,
                  int left, int right) {
     int i;
 
-    blocks[left].weight =
-        blocks[left].weight + blocks[right].weight;
-
+    blocks[left].weight += blocks[right].weight;
     blocks[left].original = 0;
 
-    for (i = right; i < *n - 1; i++) {
+    for (i = right; i < *n - 1; i++)
         blocks[i] = blocks[i + 1];
-    }
 
     (*n)--;
 }
 
-int main() {
+int main(void) {
     struct Block blocks[MAX];
     int prefix[MAX + 1];
-    int n, i;
-    int left, right;
+    int n, i, left, right;
     long long totalCost = 0;
+    long long totalWeight = 0;
 
     printf("Enter number of weights: ");
-    scanf("%d", &n);
 
-    if (n <= 0 || n > MAX) {
+    if (scanf("%d", &n) != 1 || n <= 0 || n > MAX) {
         printf("Invalid number of weights.\n");
-        return 0;
+        return 1;
     }
 
-    printf("Enter the weights in alphabetic order:\n");
+    printf("Enter positive weights in alphabetic order:\n");
 
     for (i = 0; i < n; i++) {
-        scanf("%d", &blocks[i].weight);
+        if (scanf("%lld", &blocks[i].weight) != 1 ||
+            blocks[i].weight <= 0) {
+            printf("Invalid weight. Use positive integers.\n");
+            return 1;
+        }
+
+        if (blocks[i].weight > LLONG_MAX - totalWeight) {
+            printf("Sum of weights exceeds supported range.\n");
+            return 1;
+        }
+
+        totalWeight += blocks[i].weight;
         blocks[i].original = 1;
+    }
+
+    if (n > 1 &&
+        totalWeight > LLONG_MAX / (n - 1)) {
+        printf("Weights are too large for safe cost calculation.\n");
+        return 1;
     }
 
     printf("\nInitial blocks: ");
@@ -173,18 +152,19 @@ int main() {
         findBestPair(blocks, n, prefix, &left, &right);
 
         if (left == -1) {
-            printf("No valid compatible pair found.\n");
-            return 0;
+            printf("No compatible pair found.\n");
+            return 1;
         }
 
-        printf("\nMerge: %d + %d = %d\n",
+        long long mergedWeight =
+            blocks[left].weight + blocks[right].weight;
+
+        printf("\nMerge: %lld + %lld = %lld\n",
                blocks[left].weight,
                blocks[right].weight,
-               blocks[left].weight +
-               blocks[right].weight);
+               mergedWeight);
 
-        totalCost += blocks[left].weight +
-                     blocks[right].weight;
+        totalCost += mergedWeight;
 
         mergeBlocks(blocks, &n, left, right);
 

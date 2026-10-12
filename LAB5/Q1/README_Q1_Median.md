@@ -1,4 +1,4 @@
-# DAA Lab-5: Finding Median Without Sorting
+#  Finding Median Without Sorting
 
 ## Problem Statement
 
@@ -39,7 +39,7 @@ searches only the part of the array that contains the required median.
 ## Compilation
 
 ``` bash
-gcc Q1_Median.c -o median
+gcc Q1.c -o median
 ./median
 ```
 
@@ -50,7 +50,4 @@ gcc Q1_Median.c -o median
 -   Recursion
 -   Divide and Conquer
 
-## Author
 
-**Sonu Kumar**\
-B.Tech CSE
